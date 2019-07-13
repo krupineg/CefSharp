@@ -7,18 +7,18 @@
 #include "Stdafx.h"
 
 #include "include/cef_app.h"
-#include "CefSettings.h"
+#include "AbstractCefSettings.h"
 
 namespace CefSharp
 {
     private class CefSharpApp : public CefApp,
         public CefBrowserProcessHandler
     {
-        gcroot<CefSettings^> _cefSettings;
+        gcroot<AbstractCefSettings^> _cefSettings;
         gcroot<IBrowserProcessHandler^> _browserProcessHandler;
 
     public:
-        CefSharpApp(CefSettings^ cefSettings, IBrowserProcessHandler^ browserProcessHandler) :
+        CefSharpApp(AbstractCefSettings^ cefSettings, IBrowserProcessHandler^ browserProcessHandler) :
             _cefSettings(cefSettings),
             _browserProcessHandler(browserProcessHandler)
         {
@@ -60,6 +60,11 @@ namespace CefSharp
                 commandLine->AppendArgument(StringUtils::ToNative(CefSharpArguments::WcfEnabledArgument));
             }
 
+            if (CefSharpSettings::SubprocessExitIfParentProcessClosed)
+            {
+                commandLine->AppendSwitch(StringUtils::ToNative(CefSharpArguments::ExitIfParentProcessClosed));
+            }
+
             //ChannelId was removed in https://bitbucket.org/chromiumembedded/cef/issues/1912/notreached-in-logchannelidandcookiestores
             //We need to know the process Id to establish WCF communication and for monitoring of parent process exit
             commandLine->AppendArgument(StringUtils::ToNative(CefSharpArguments::HostProcessIdArgument + "=" + Process::GetCurrentProcess()->Id));
@@ -84,7 +89,7 @@ namespace CefSharp
                 commandLine->AppendArgument(StringUtils::ToNative(CefSharpArguments::CustomSchemeArgument + argument));
             }
 
-            if (_cefSettings->FocusedNodeChangedEnabled)
+            if (CefSharpSettings::FocusedNodeChangedEnabled)
             {
                 commandLine->AppendArgument(StringUtils::ToNative(CefSharpArguments::FocusedNodeChangedEnabledArgument));
             }
@@ -105,9 +110,15 @@ namespace CefSharp
                     CefString name = StringUtils::ToNative(kvp->Key);
                     CefString value = StringUtils::ToNative(kvp->Value);
 
+					if (kvp->Key == "disable-features")
+					{
+						//Temp workaround so we can set the disable-features command line argument
+						// See https://github.com/cefsharp/CefSharp/issues/2408
+						commandLine->AppendSwitchWithValue(name, value);
+					}
                     // Right now the command line args handed to the application (global command line) have higher
                     // precedence than command line args provided by the app
-                    if(!commandLine->HasSwitch(name))
+                    else if(!commandLine->HasSwitch(name))
                     {
                         commandLine->AppendSwitchWithValue(name, value);
                     }

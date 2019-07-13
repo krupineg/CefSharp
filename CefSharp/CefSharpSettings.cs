@@ -71,6 +71,13 @@ namespace CefSharp
         public static bool ShutdownOnExit { get; set; }
 
         /// <summary>
+        /// CefSharp.BrowserSubprocess will monitor the parent process and exit if the parent process closes
+        /// before the subprocess. This currently defaults to false. 
+        /// See https://github.com/cefsharp/CefSharp/issues/2359 for more information.
+        /// </summary>
+        public static bool SubprocessExitIfParentProcessClosed { get; set; }
+
+        /// <summary>
         /// The proxy options that will be used for all connections
         /// 
         /// If set before the call to Cef.Initialize, command line arguments will be set for you
@@ -87,5 +94,12 @@ namespace CefSharp
         /// Setting this property to true will allocate new Tasks on TaskScheduler.Default for execution.
         /// </summary>
         public static bool ConcurrentTaskExecution { get; set; }
+
+        /// <summary>
+        /// If true a message will be sent from the render subprocess to the
+        /// browser when a DOM node (or no node) gets focus. The default is
+        /// false.
+        /// </summary>
+        public static bool FocusedNodeChangedEnabled { get; set; }
     }
 }

@@ -77,19 +77,19 @@ namespace CefSharp.OffScreen
 			browser = null;
 		}
 
-		public virtual ScreenInfo? GetScreenInfo()
-		{
-			var screenInfo = new ScreenInfo(scaleFactor: 1.0F);
+        public virtual ScreenInfo? GetScreenInfo()
+        {
+            var screenInfo = new ScreenInfo { DeviceScaleFactor = 1.0F };
 
 			return screenInfo;
 		}
 
-		public virtual ViewRect? GetViewRect()
+		public virtual Rect? GetViewRect()
 		{
 			//TODO: See if this can be refactored and remove browser reference
 			var size = browser.Size;
 
-			var viewRect = new ViewRect(size.Width, size.Height);
+			var viewRect = new Rect(0, 0, size.Width, size.Height);
 
 			return viewRect;
 		}

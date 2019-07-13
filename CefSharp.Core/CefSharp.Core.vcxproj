@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\cef.sdk.3.3359.1769\build\cef.sdk.props" Condition="Exists('..\packages\cef.sdk.3.3359.1769\build\cef.sdk.props')" />
+  <Import Project="..\packages\cef.sdk.3.3440.1803\build\cef.sdk.props" Condition="Exists('..\packages\cef.sdk.3.3440.1803\build\cef.sdk.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -226,6 +226,7 @@
     <ClCompile Include="Internals\CefContextMenuParamsWrapper.cpp" />
     <ClCompile Include="Internals\CefFrameWrapper.cpp" />
     <ClCompile Include="Internals\CefSharpBrowserWrapper.cpp" />
+    <ClCompile Include="Internals\CefValueWrapper.cpp" />
     <ClCompile Include="Internals\ClientAdapter.cpp" />
     <ClCompile Include="Internals\CookieVisitor.cpp" />
     <ClCompile Include="Internals\CefRequestWrapper.cpp" />
@@ -238,6 +239,7 @@
     <ClCompile Include="Internals\Serialization\V8Serialization.cpp" />
     <ClCompile Include="Internals\Serialization\Primitives.cpp" />
     <ClCompile Include="Internals\Serialization\JsObjectsSerialization.cpp" />
+    <ClCompile Include="Internals\CefRequestContextHandlerAdapter.cpp" />
     <ClCompile Include="ResourceHandlerWrapper.cpp" />
     <ClCompile Include="Stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -249,6 +251,7 @@
   <ItemGroup>
     <ClInclude Include="BrowserSettings.h" />
     <ClInclude Include="Cef.h" />
+    <ClInclude Include="Internals\CefValueWrapper.h" />
     <ClInclude Include="Internals\CefWriteHandlerWrapper.h" />
     <ClInclude Include="Internals\CefImageWrapper.h" />
     <ClInclude Include="Internals\CefDeleteCookiesCallbackAdapter.h" />
@@ -280,7 +283,7 @@
     <ClInclude Include="Internals\CefTaskWrapper.h" />
     <ClInclude Include="Internals\CefWrapper.h" />
     <ClInclude Include="PopupFeatures.h" />
-    <ClInclude Include="RequestContextHandler.h" />
+    <ClInclude Include="Internals\CefRequestContextHandlerAdapter.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="WindowInfo.h" />
     <ClInclude Include="Internals\CefCompletionCallbackAdapter.h" />
@@ -303,7 +306,7 @@
     <ClInclude Include="NativeMethodWrapper.h" />
     <ClInclude Include="Internals\Serialization\V8Serialization.h" />
     <ClInclude Include="ManagedCefBrowserAdapter.h" />
-    <ClInclude Include="CefSettings.h" />
+    <ClInclude Include="AbstractCefSettings.h" />
     <ClInclude Include="Internals\Serialization\Primitives.h" />
     <ClInclude Include="RequestContext.h" />
     <ClInclude Include="RequestContextSettings.h" />

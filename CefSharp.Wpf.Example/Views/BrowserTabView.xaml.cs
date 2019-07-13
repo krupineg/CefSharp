@@ -25,6 +25,8 @@ namespace CefSharp.Wpf.Example.Views
         {
             InitializeComponent();
 
+            //browser.BrowserSettings.BackgroundColor = Cef.ColorSetARGB(0, 255, 255, 255);
+
             browser.RequestHandler = new RequestHandler();
 
             //See https://github.com/cefsharp/CefSharp/issues/2246 for details on the two different binding options
@@ -88,6 +90,7 @@ namespace CefSharp.Wpf.Example.Views
             browser.DisplayHandler = new DisplayHandler();
             browser.LifeSpanHandler = new LifespanHandler();
             browser.MenuHandler = new MenuHandler();
+            browser.AccessibilityHandler = new AccessibilityHandler();
             var downloadHandler = new DownloadHandler();
             downloadHandler.OnBeforeDownloadFired += OnBeforeDownloadFired;
             downloadHandler.OnDownloadUpdatedFired += OnDownloadUpdatedFired;

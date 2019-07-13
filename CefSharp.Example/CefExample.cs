@@ -38,7 +38,7 @@ namespace CefSharp.Example
         private static readonly bool DebuggingSubProcess = Debugger.IsAttached;
         private static string PluginInformation = "";
 
-        public static void Init(bool osr, bool multiThreadedMessageLoop, IBrowserProcessHandler browserProcessHandler)
+        public static void Init(AbstractCefSettings settings, IBrowserProcessHandler browserProcessHandler)
         {
             // Set Google API keys, used for Geolocation requests sans GPS.  See http://www.chromium.org/developers/how-tos/api-keys
             // Environment.SetEnvironmentVariable("GOOGLE_API_KEY", "");
@@ -53,7 +53,6 @@ namespace CefSharp.Example
             //http://peter.sh/experiments/chromium-command-line-switches/
             //NOTE: Not all relevant in relation to `CefSharp`, use for reference purposes only.
 
-            var settings = new CefSettings();
             settings.RemoteDebuggingPort = 8088;
             //The location where cache data will be stored on disk. If empty an in-memory cache will be used for some features and a temporary disk cache for others.
             //HTML5 databases such as localStorage will only persist across sessions if a cache path is specified. 
@@ -96,20 +95,23 @@ namespace CefSharp.Example
             //Possibly useful when experiencing blury fonts.
             //settings.CefCommandLineArgs.Add("disable-direct-write", "1");
 
-            settings.MultiThreadedMessageLoop = multiThreadedMessageLoop;
-            settings.ExternalMessagePump = !multiThreadedMessageLoop;
+            // The following options control accessibility state for all frames.
+            // These options only take effect if accessibility state is not set by IBrowserHost.SetAccessibilityState call.
+            // --force-renderer-accessibility enables browser accessibility.
+            // --disable-renderer-accessibility completely disables browser accessibility.
+            //settings.CefCommandLineArgs.Add("force-renderer-accessibility", "1");
+            //settings.CefCommandLineArgs.Add("disable-renderer-accessibility", "1");
+
 
             //Enables Uncaught exception handler
             settings.UncaughtExceptionStackSize = 10;
 
             // Off Screen rendering (WPF/Offscreen)
-            if(osr)
+            if(settings.WindowlessRenderingEnabled)
             {
-                settings.WindowlessRenderingEnabled = true;
-
                 //Disable Direct Composition to test https://github.com/cefsharp/CefSharp/issues/1634
                 //settings.CefCommandLineArgs.Add("disable-direct-composition", "1");
-                
+
                 // DevTools doesn't seem to be working when this is enabled
                 // http://magpcss.org/ceforum/viewtopic.php?f=6&t=14095
                 //settings.CefCommandLineArgs.Add("enable-begin-frame-scheduling", "1");
@@ -179,7 +181,20 @@ namespace CefSharp.Example
 
             settings.RegisterExtension(new CefExtension("cefsharp/example", Resources.extension));
 
-            settings.FocusedNodeChangedEnabled = true;
+            //This must be set before Cef.Initialized is called
+            CefSharpSettings.FocusedNodeChangedEnabled = true;
+
+            //Experimental option where bound async methods are queued on TaskScheduler.Default.
+            //CefSharpSettings.ConcurrentTaskExecution = true;
+
+            //Legacy Binding Behaviour doesn't work for cross-site navigation (navigating to a different domain)
+            //See issue https://github.com/cefsharp/CefSharp/issues/1203 for details
+            //CefSharpSettings.LegacyJavascriptBindingEnabled = true;
+
+            //Exit the subprocess if the parent process happens to close
+            //This is optional at the moment
+            //https://github.com/cefsharp/CefSharp/pull/2375/
+            CefSharpSettings.SubprocessExitIfParentProcessClosed = true;
 
             //NOTE: Set this before any calls to Cef.Initialize to specify a proxy with username and password
             //One set this cannot be changed at runtime. If you need to change the proxy at runtime (dynamically) then
@@ -192,13 +207,6 @@ namespace CefSharp.Example
             }
 
             Cef.AddCrossOriginWhitelistEntry(BaseUrl, "https", "cefsharp.com", false);
-
-            //Experimental option where bound async methods are queued on TaskScheduler.Default.
-            //CefSharpSettings.ConcurrentTaskExecution = true;
-
-            //Legacy Binding Behaviour doesn't work for cross-site navigation (navigating to a different domain)
-            //See issue https://github.com/cefsharp/CefSharp/issues/1203 for details
-            //CefSharpSettings.LegacyJavascriptBindingEnabled = true;
         }
 
         public static async void RegisterTestResources(IWebBrowser browser)
@@ -207,14 +215,13 @@ namespace CefSharp.Example
             if (handler != null)
             {
                 const string renderProcessCrashedBody = "<html><body><h1>Render Process Crashed</h1><p>Your seeing this message as the render process has crashed</p></body></html>";
-                handler.RegisterHandler(RenderProcessCrashedUrl, ResourceHandler.FromString(renderProcessCrashedBody));
+                handler.RegisterHandler(RenderProcessCrashedUrl, ResourceHandler.GetByteArray(renderProcessCrashedBody, Encoding.UTF8));
 
                 const string responseBody = "<html><body><h1>Success</h1><p>This document is loaded from a System.IO.Stream</p></body></html>";
-                var response = ResourceHandler.FromString(responseBody);
-                handler.RegisterHandler(TestResourceUrl, response);
+                handler.RegisterHandler(TestResourceUrl, ResourceHandler.GetByteArray(responseBody, Encoding.UTF8));
 
                 const string unicodeResponseBody = "<html><body>整体满意度</body></html>";
-                handler.RegisterHandler(TestUnicodeResourceUrl, ResourceHandler.FromString(unicodeResponseBody));
+                handler.RegisterHandler(TestUnicodeResourceUrl, ResourceHandler.GetByteArray(unicodeResponseBody, Encoding.UTF8));
 
                 if (string.IsNullOrEmpty(PluginInformation))
                 {
@@ -256,7 +263,7 @@ namespace CefSharp.Example
                     PluginInformation = pluginBody.ToString();
                 }
 
-                handler.RegisterHandler(PluginsTestUrl, ResourceHandler.FromString(PluginInformation));
+                handler.RegisterHandler(PluginsTestUrl, ResourceHandler.GetByteArray(PluginInformation, Encoding.UTF8));
             }
         }
     }

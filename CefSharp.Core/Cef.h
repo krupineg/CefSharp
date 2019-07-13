@@ -12,13 +12,14 @@
 #include <include/cef_origin_whitelist.h>
 #include <include/cef_web_plugin.h>
 #include <include/cef_crash_util.h>
+#include <include/internal/cef_types.h>
 
 #include "Internals/CefSharpApp.h"
 #include "Internals/PluginVisitor.h"
 #include "Internals/CefTaskScheduler.h"
 #include "Internals/CefRegisterCdmCallbackAdapter.h"
 #include "CookieManager.h"
-#include "CefSettings.h"
+#include "AbstractCefSettings.h"
 #include "RequestContext.h"
 #include "SchemeHandlerFactoryWrapper.h"
 
@@ -128,20 +129,6 @@ namespace CefSharp
         }
 
         /// <summary>
-        /// Initializes CefSharp with the default settings. 
-        /// This function can only be called once, subsiquent calls will result in an Exception.
-        /// It's important to note that Initialize and Shutdown <strong>MUST</strong> be called on your main
-        /// applicaiton thread (Typically the UI thead). If you call them on different
-        /// threads, your application will hang. See the documentation for Cef.Shutdown() for more details.
-        /// </summary>
-        /// <returns>true if successful; otherwise, false.</returns>
-        static bool Initialize()
-        {
-            auto cefSettings = gcnew CefSettings();
-            return Initialize(cefSettings);
-        }
-
-        /// <summary>
         /// Initializes CefSharp with user-provided settings.
         /// It's important to note that Initialize and Shutdown <strong>MUST</strong> be called on your main
         /// applicaiton thread (Typically the UI thead). If you call them on different
@@ -149,7 +136,7 @@ namespace CefSharp
         /// </summary>
         /// <param name="cefSettings">CefSharp configuration settings.</param>
         /// <returns>true if successful; otherwise, false.</returns>
-        static bool Initialize(CefSettings^ cefSettings)
+        static bool Initialize(AbstractCefSettings^ cefSettings)
         {
             return Initialize(cefSettings, false, nullptr);
         }
@@ -163,12 +150,16 @@ namespace CefSharp
         /// <param name="cefSettings">CefSharp configuration settings.</param>
         /// <param name="performDependencyCheck">Check that all relevant dependencies avaliable, throws exception if any are missing</param>
         /// <returns>true if successful; otherwise, false.</returns>
-        static bool Initialize(CefSettings^ cefSettings, bool performDependencyCheck, IBrowserProcessHandler^ browserProcessHandler)
+        static bool Initialize(AbstractCefSettings^ cefSettings, bool performDependencyCheck, IBrowserProcessHandler^ browserProcessHandler)
         {
             if (IsInitialized)
             {
                 // NOTE: Can only initialize Cef once, to make this explicitly clear throw exception on subsiquent attempts
-                throw gcnew Exception("Cef can only be initialized once. Use Cef.IsInitialized to guard against this exception.");
+                throw gcnew Exception("CEF can only be initialized once per process. This is a limitation of the underlying " + 
+					"CEF/Chromium framework. You can change many (not all) settings at runtime through RequestContext.SetPreference. " + 
+					"See https://github.com/cefsharp/CefSharp/wiki/General-Usage#request-context-browser-isolation " +
+					"Use Cef.IsInitialized to guard against this exception. If you are seeing this unexpectedly then you are likely " +
+					"calling Cef.Initialize after you've created an instance of ChromiumWebBrowser, it must be before the first instance is created.");
             }
             
             if (cefSettings->BrowserSubprocessPath == nullptr)
@@ -416,7 +407,10 @@ namespace CefSharp
                 {
                     if (_initializedThreadId != Thread::CurrentThread->ManagedThreadId)
                     {
-                        throw gcnew Exception("Shutdown must be called on the same thread that Initialize was called - typically your UI thread. CefSharp was initialized on ManagedThreadId: " + Thread::CurrentThread->ManagedThreadId);
+                        throw gcnew Exception("Cef.Shutdown must be called on the same thread that Cef.Initialize was called - typically your UI thread." +
+							"If you called Cef.Initialize on a Thread other than the UI thread then you will need to call Cef.Shutdown on the same thread." +
+							"Cef.Initialize was called on ManagedThreadId: " + _initializedThreadId + "where Cef.Shutdown is being called on" +
+							"ManagedThreadId:" + Thread::CurrentThread->ManagedThreadId);
                     }
 
                     UIThreadTaskFactory = nullptr;
@@ -556,6 +550,20 @@ namespace CefSharp
             }
 
             return nullptr;
+        }
+
+        /// <summary>
+        /// Helper function (wrapper around the CefColorSetARGB macro) which combines
+        /// the 4 color components into an uint32 for use with BackgroundColor property
+        /// </summary>
+        /// <param name="a">Alpha</param>
+        /// <param name="r">Red</param>
+        /// <param name="g">Green</param>
+        /// <param name="b">Blue</param>
+        /// <returns>Returns the color.</returns>
+        static uint32 ColorSetARGB(uint32 a, uint32 r, uint32 g, uint32 b)
+        {
+            return CefColorSetARGB(a, r, g, b);
         }
 
         /// <summary>
